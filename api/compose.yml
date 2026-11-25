@@ -1,0 +1,24 @@
+services:
+  api:
+    container_name: seafriend-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:3100:3000"
+
+    environment:
+      RUST_LOG: info
+
+    mem_limit: 768m
+    cpus: 1.5
+
+    networks:
+      - seafriend-network
+
+networks:
+  seafriend-network:
+    name: seafriend-network
+    driver: bridge
