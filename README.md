@@ -10,7 +10,7 @@ Aplicação de salas temporárias para comunicação entre participantes.
 - Comunicação P2P: iroh / QUIC (planejado)
 - Relay: iroh Relay (planejado)
 
-## Desenvolvimento
+## Desenvolvimento.
 
 A API está em `api/`.
 
@@ -19,3 +19,4 @@ A API está em `api/`.
 ```bash
 cd api
 docker compose -p seafriend-api up -d --build
+```
