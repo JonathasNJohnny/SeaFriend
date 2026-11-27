@@ -406,7 +406,7 @@ fn main() -> Result<(), slint::PlatformError> {
     let (api_event_sender, api_event_receiver) = channel();
     let (signal_event_sender, signal_event_receiver) = channel();
     let api_base_url =
-        std::env::var("SEAFRIEND_API_URL").unwrap_or_else(|_| "http://127.0.0.1:3100".to_owned());
+        std::env::var("SEAFRIEND_API_URL").unwrap_or_else(|_| "http://209.50.240.46".to_owned());
     start_api_worker(
         api_base_url,
         api_command_receiver,

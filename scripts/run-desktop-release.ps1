@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $false)]
-    [string] $ApiUrl = "http://127.0.0.1:3100",
+    [string] $ApiUrl = "http://209.50.240.46",
     [int] $AudioProcessId = 0
 )
 

@@ -1,6 +1,10 @@
 name: SeaFriend Deploy
 
 on:
+  push:
+    branches:
+      - main
+
   workflow_dispatch:
     inputs:
       ref:
@@ -24,7 +28,7 @@ jobs:
       - name: Checkout selected ref
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.ref || github.ref }}
           fetch-depth: 1
 
       - name: Deploy through pinned SSH host
