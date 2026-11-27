@@ -1,6 +1,9 @@
 # Rust
 target/
 **/target/
+seafriend-capture.png
+*.raw
+dist/
 
 # Environment
 .env
@@ -20,3 +23,4 @@ Thumbs.db
 
 # Tasks
 tasks
+docs

@@ -1,16 +1,6 @@
-use axum::{routing::get, Json, Router};
-use serde_json::json;
+use seafriend_api::{AppState, build_router};
 use tokio::net::TcpListener;
-use tower_http::trace::TraceLayer;
 use tracing_subscriber::EnvFilter;
-
-async fn health() -> Json<serde_json::Value> {
-    Json(json!({
-        "status": "online",
-        "service": "SeaFriend API",
-        "version": "0.1.0"
-    }))
-}
 
 #[tokio::main]
 async fn main() {
@@ -18,9 +8,18 @@ async fn main() {
         .with_env_filter(EnvFilter::new("info"))
         .init();
 
-    let app = Router::new()
-        .route("/health", get(health))
-        .layer(TraceLayer::new_for_http());
+    let state = AppState::from_env();
+    let cleanup_state = state.clone();
+
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(cleanup_state.cleanup_interval());
+        loop {
+            interval.tick().await;
+            cleanup_state.cleanup_expired().await;
+        }
+    });
+
+    let app = build_router(state);
 
     let listener = TcpListener::bind("0.0.0.0:3000")
         .await

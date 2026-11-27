@@ -1,0 +1,63 @@
+name: SeaFriend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  api:
+    name: API checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Check formatting
+        run: cargo fmt -- --check
+      - name: Test
+        run: cargo test --locked
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+  desktop:
+    name: Desktop checks
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable-x86_64-pc-windows-msvc
+          components: rustfmt, clippy
+      - name: Check formatting
+        run: cargo fmt -- --check
+      - name: Test all targets
+        run: cargo test --locked --all-targets
+      - name: Clippy all targets
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Build release desktop
+        run: cargo build --locked --release
+      - name: Package desktop artifact
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item target\release\seafriend-desktop.exe package\
+          Copy-Item ..\scripts\run-desktop-release.ps1 package\
+          Copy-Item README.md package\DESKTOP-README.md
+          Compress-Archive -Path package\* -DestinationPath seafriend-desktop-windows-x64.zip -Force
+      - name: Upload desktop artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: seafriend-desktop-windows-x64
+          path: desktop/seafriend-desktop-windows-x64.zip
