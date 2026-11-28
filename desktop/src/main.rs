@@ -42,6 +42,7 @@ use windows_capture::{
         ColorFormat, CursorCaptureSettings, DirtyRegionSettings, DrawBorderSettings,
         MinimumUpdateIntervalSettings, SecondaryWindowSettings, Settings,
     },
+    window::Window,
 };
 
 slint::include_modules!();
@@ -133,7 +134,13 @@ impl GraphicsCaptureApiHandler for CaptureHandler {
     }
 }
 
-fn start_capture(status: Arc<Mutex<String>>, sender: FrameFanout) {
+fn start_capture(
+    status: Arc<Mutex<String>>,
+    sender: FrameFanout,
+    audio_sender: SyncSender<Vec<u8>>,
+    audio_stop: Arc<AtomicBool>,
+    audio_capture_started: Arc<AtomicBool>,
+) {
     std::thread::spawn(move || {
         let result = (|| -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             set_status(&status, "selecionando janela".to_owned());
@@ -142,6 +149,26 @@ fn start_capture(status: Arc<Mutex<String>>, sender: FrameFanout) {
                 set_status(&status, "seleção cancelada".to_owned());
                 return Ok(());
             };
+            let selected_name = item.item.DisplayName()?.to_string();
+            if let Some(selected_window) = Window::enumerate()?
+                .into_iter()
+                .find(|window| window.title().ok().as_deref() == Some(selected_name.as_str()))
+            {
+                let process_id = selected_window.process_id()?;
+                if !audio_capture_started.swap(true, Ordering::Relaxed) {
+                    audio_stop.store(false, Ordering::Relaxed);
+                    let _ = audio::start_process_capture(process_id, audio_sender, audio_stop);
+                    set_status(
+                        &status,
+                        format!("capturando janela e áudio: {selected_name}"),
+                    );
+                }
+            } else {
+                set_status(
+                    &status,
+                    format!("capturando janela sem áudio associado: {selected_name}"),
+                );
+            }
             let settings = Settings::new(
                 item,
                 CursorCaptureSettings::Default,
@@ -152,7 +179,6 @@ fn start_capture(status: Arc<Mutex<String>>, sender: FrameFanout) {
                 ColorFormat::Rgba8,
                 sender,
             );
-            set_status(&status, "capturando".to_owned());
             CaptureHandler::start(settings)?;
             Ok(())
         })();
@@ -393,15 +419,6 @@ fn main() -> Result<(), slint::PlatformError> {
     let audio_playback_stop = Arc::new(AtomicBool::new(false));
     let _audio_playback =
         audio::start_playback(audio_playback_receiver, audio_playback_stop.clone());
-    let audio_sender_for_env = audio_sender.clone();
-    let audio_capture_started_for_env = audio_capture_started.clone();
-    let _audio_capture = std::env::var("SEAFRIEND_AUDIO_PROCESS_ID")
-        .ok()
-        .and_then(|value| value.parse::<u32>().ok())
-        .map(|process_id| {
-            audio_capture_started_for_env.store(true, Ordering::Relaxed);
-            audio::start_process_capture(process_id, audio_sender_for_env, audio_stop.clone())
-        });
     let (api_commands, api_command_receiver) = channel();
     let (api_event_sender, api_event_receiver) = channel();
     let (signal_event_sender, signal_event_receiver) = channel();
@@ -450,8 +467,17 @@ fn main() -> Result<(), slint::PlatformError> {
         ui: display_sender.clone(),
         network: media_hub,
     };
+    let capture_audio_sender = audio_sender.clone();
+    let capture_audio_stop = audio_stop.clone();
+    let capture_audio_started = audio_capture_started.clone();
     window.on_select_window(move || {
-        start_capture(Arc::clone(&capture_status), capture_fanout.clone());
+        start_capture(
+            Arc::clone(&capture_status),
+            capture_fanout.clone(),
+            capture_audio_sender.clone(),
+            capture_audio_stop.clone(),
+            capture_audio_started.clone(),
+        );
     });
     let audio_status = Arc::clone(&status);
     let audio_sender_for_ui = audio_sender.clone();

@@ -5,7 +5,6 @@ export component MainWindow inherits Window {
     width: 960px;
     height: 640px;
     background: #101923;
-
     callback select-window();
     callback start-audio();
     callback list-audio-processes();
@@ -13,7 +12,6 @@ export component MainWindow inherits Window {
     callback join-room();
     callback leave-room();
     callback close-room();
-
     in-out property <string> display-name: "Participante";
     in-out property <string> join-code;
     in-out property <string> api-status: "conectando à API";
@@ -22,132 +20,42 @@ export component MainWindow inherits Window {
     in-out property <int> participant-count: 0;
     in-out property <string> participant-list: "";
     in-out property <string> audio-process-id;
-    in-out property <string> audio-processes: "";
-
+    in-out property <string> audio-processes;
+    in-out property <string> capture-status: "aguardando seleção";
+    in-out property <image> capture-image;
     VerticalBox {
         padding: 24px;
         spacing: 16px;
-
-        Text {
-            text: "SeaFriend";
-            color: #e8f1f8;
-            font-size: 30px;
-            font-weight: 700;
-        }
-
-        Text {
-            text: "Sala temporária com captura de vídeo e áudio";
-            color: #9ec5df;
-            font-size: 16px;
-        }
-
-        Text {
-            text: "Sala";
-            color: #e8f1f8;
-            font-size: 20px;
-        }
-
+        Text { text: "SeaFriend"; color: #e8f1f8; font-size: 30px; font-weight: 700; }
+        Text { text: "Sala temporária com captura de vídeo e áudio"; color: #9ec5df; font-size: 16px; }
+        Text { text: "Sala"; color: #e8f1f8; font-size: 20px; }
         HorizontalBox {
             spacing: 8px;
-            LineEdit {
-                placeholder-text: "Nome exibido";
-                text: root.display-name;
-                edited(text) => { root.display-name = text; }
-            }
-            Button {
-                text: "Criar sala";
-                clicked => { root.create-room(); }
-            }
+            LineEdit { placeholder-text: "Nome exibido"; text: root.display-name; edited(text) => { root.display-name = text; } }
+            Button { text: "Criar sala"; clicked => { root.create-room(); } }
         }
-
         HorizontalBox {
             spacing: 8px;
-            LineEdit {
-                placeholder-text: "Código da sala";
-                text: root.join-code;
-                edited(text) => { root.join-code = text; }
-            }
-            Button {
-                text: "Entrar";
-                clicked => { root.join-room(); }
-            }
-            Button {
-                text: "Sair";
-                clicked => { root.leave-room(); }
-            }
-            Button {
-                text: "Encerrar";
-                clicked => { root.close-room(); }
-            }
+            LineEdit { placeholder-text: "Código da sala"; text: root.join-code; edited(text) => { root.join-code = text; } }
+            Button { text: "Entrar"; clicked => { root.join-room(); } }
+            Button { text: "Sair"; clicked => { root.leave-room(); } }
+            Button { text: "Encerrar"; clicked => { root.close-room(); } }
         }
-
-        Text {
-            text: "API: " + root.api-status;
-            color: #b8c9d6;
-        }
-
-        Text {
-            text: root.room-id == "" ? "Nenhuma sala ativa" : "Sala ativa: " + root.room-id;
-            color: #b8c9d6;
-        }
-
-        Text {
-            text: "Participantes: " + root.participant-count;
-            color: #b8c9d6;
-        }
-
-        Text {
-            text: root.participant-list == "" ? "Nomes: —" : "Nomes: " + root.participant-list;
-            color: #8fa8b8;
-        }
-
+        Text { text: "API: " + root.api-status; color: #b8c9d6; }
+        Text { text: root.room-id == "" ? "Nenhuma sala ativa" : "Sala ativa: " + root.room-id; color: #b8c9d6; }
+        Text { text: "Participantes: " + root.participant-count; color: #b8c9d6; }
+        Text { text: root.participant-list == "" ? "Nomes: —" : "Nomes: " + root.participant-list; color: #8fa8b8; }
         HorizontalBox {
             spacing: 12px;
-            Button {
-                text: "Selecionar janela";
-                clicked => { root.select-window(); }
-            }
-            Text {
-                text: "Captura: " + root.capture-status;
-                color: #b8c9d6;
-                vertical-alignment: center;
-            }
+            Button { text: "Selecionar janela (vídeo + áudio)"; clicked => { root.select-window(); } }
+            Text { text: "Captura: " + root.capture-status; color: #b8c9d6; vertical-alignment: center; }
         }
-
-        HorizontalBox {
-            spacing: 8px;
-            LineEdit {
-                placeholder-text: "PID do aplicativo para áudio";
-                text: root.audio-process-id;
-                edited(text) => { root.audio-process-id = text; }
-            }
-            Button {
-                text: "Capturar áudio";
-                clicked => { root.start-audio(); }
-            }
-            Button {
-                text: "Listar processos";
-                clicked => { root.list-audio-processes(); }
-            }
-        }
-
-        Text {
-            text: root.audio-processes;
-            color: #8fa8b8;
-            wrap: word-wrap;
-        }
-
+        Text { text: "O áudio é capturado automaticamente da janela selecionada."; color: #8fa8b8; wrap: word-wrap; }
         Rectangle {
             border-width: 1px;
             border-color: #315166;
             background: #071019;
-            Image {
-                source: root.capture-image;
-                image-fit: contain;
-            }
+            Image { source: root.capture-image; image-fit: contain; }
         }
     }
-
-    in-out property <string> capture-status: "aguardando seleção";
-    in-out property <image> capture-image;
 }
